@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "deploy": "hardhat run scripts/deploy.js",
+    "deploy:local": "hardhat run scripts/deploy.js",
+    "deploy:ropsten": "hardhat run --network ropsten scripts/deploy.js",
+    "deploy:mumbai": "hardhat run --network mumbai scripts/deploy.js",
     "compile": "hardhat compile",
     "test": "hardhat test",
     "chain": "hardhat node"
