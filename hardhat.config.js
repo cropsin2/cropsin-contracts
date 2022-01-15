@@ -16,12 +16,12 @@ module.exports = {
       },
       mumbai: {
          url: MUMBAI_RPC_URL,
-         gasPrice: 1000000000,
+         gasPrice: 2000000000,
          accounts: [`0x${PRIVATE_KEY}`]
        },
       ropsten: {
          url: ROPSTEN_RPC_URL,
-         gasPrice: 1000000000,
+         gasPrice: 2000000000,
          accounts: [`0x${PRIVATE_KEY}`]
       }
    },

@@ -6,6 +6,7 @@ async function main() {
   // Start deployment, returning a promise that resolves to a contract object
   const deployed = await Cropsin.deploy(TOKEN_URI); // Instance of the contract
   console.log("Contract deployed to address:", deployed.address);
+  console.log("Transaction hash", deployed.deployTransaction.hash);
 }
 
 main()
