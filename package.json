@@ -1,0 +1,35 @@
+{
+  "name": "ethglobalhackaton-contracts",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "deploy": "hardhat run scripts/deploy.js",
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "chain": "hardhat node"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/javiesses/ethglobalhackathon.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/javiesses/ethglobalhackathon/issues"
+  },
+  "homepage": "https://github.com/javiesses/ethglobalhackathon#readme",
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.0.4",
+    "@nomiclabs/hardhat-waffle": "^2.0.1",
+    "chai": "^4.3.4",
+    "ethereum-waffle": "^3.4.0",
+    "ethers": "^5.5.3",
+    "hardhat": "^2.8.2"
+  },
+  "dependencies": {
+    "@alch/alchemy-web3": "^1.1.9",
+    "@openzeppelin/contracts": "^4.4.2",
+    "dotenv": "^11.0.0"
+  }
+}
