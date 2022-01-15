@@ -1,15 +1,14 @@
-//Contract based on https://docs.openzeppelin.com/contracts/3.x/erc721
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
+import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * Pays content creators with the fungible token (id: 1) and allow any person to create its own NFT
  */
-contract Cropsin is ERC1155, Ownable {
+contract Cropsin is ERC1155Supply, Ownable {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
 

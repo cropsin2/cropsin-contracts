@@ -12,7 +12,7 @@ Because we wan to have a single contract with NFTs from multiple artists with mu
 
 In another hand, we also want to mint a ERC20 kind of token that will be used to pay for the NFTs, by doing so in the same contract we are saving pretty much gas.
 
-Extra methods:
+*Extra methods*
 
 `constructor`: it mints the fungible token and transfers them to the owner of the contract.
 
