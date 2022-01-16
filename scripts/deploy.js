@@ -5,10 +5,12 @@ async function main() {
   const TOKEN_URI = 'https://test.uri/{id}.json'
 
   const cropsin = await Cropsin.deploy(TOKEN_URI);
-  console.log(`Cropsin contract deployed to address: ${cropsin.address} and the tx hash is ${cropsin.deployTransaction.hash}`);
+  console.log(`Cropsin contract deployed to address: ${cropsin.address}`);
+  console.log(`The tx hash is ${cropsin.deployTransaction.hash}`);
 
   const marketplace = await Marketplace.deploy(cropsin.address);
-  console.log(`Marketplace contract deployed to address: ${marketplace.address} and the tx hash is ${marketplace.deployTransaction.hash}`);
+  console.log(`Marketplace contract deployed to address: ${marketplace.address}`);
+  console.log(`The tx hash is ${marketplace.deployTransaction.hash}`);
 
 }
 

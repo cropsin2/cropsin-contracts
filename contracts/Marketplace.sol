@@ -3,12 +3,14 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "./Cropsin.sol";
 
 /**
  * 
  */
 contract Marketplace is Pausable, Ownable {
+  using SafeMath for uint256;
 
   /**
    * @dev Emitted when `quantity` tokens of token `tokenId` are put on sale from `from` at a price `price`.
@@ -20,6 +22,11 @@ contract Marketplace is Pausable, Ownable {
    */
   event TokenRemovedFromSale(address indexed from, uint256 tokenId);
 
+  /**
+   * @dev Emitted when token `tokenId` is removed from the sale list of `from`
+   */
+  event TokenSold(address indexed from, address indexed to, uint256 tokenId, uint256 quantity, uint256 totalPrice);
+
   struct OnSaleToken {
     uint256 quantity;
     uint256 price;
@@ -30,7 +37,8 @@ contract Marketplace is Pausable, Ownable {
    */
   mapping(uint256 => mapping(address => OnSaleToken)) public _onSaleTokens;
 
-  Cropsin cropsin;
+  Cropsin private cropsin;
+  uint256 private constant ERC20_TOKEN_ID = 1;
   
   constructor(Cropsin _cropsin) Pausable() Ownable() {
     cropsin = _cropsin;
@@ -70,5 +78,34 @@ contract Marketplace is Pausable, Ownable {
 
   function availability(uint256 tokenId, address from) public view returns (OnSaleToken memory) {
     return _onSaleTokens[tokenId][from];
+  }
+
+  function buyTokenFrom(address from, uint256 tokenId, uint256 quantity) public {
+    require(cropsin.exists(tokenId), "Marketplace: tokenId does not exists");
+    require(cropsin.isApprovedForAll(from, address(this)), "Marketplace: the marketplace contract is not added as an operator of the token");
+    require(cropsin.isApprovedForAll(_msgSender(), address(this)), "Marketplace: the marketplace contract is not added as an operator of the CRP token");
+    
+    OnSaleToken memory onSaleToken = _onSaleTokens[tokenId][from];
+
+    require(onSaleToken.quantity >= quantity, "Marketplace: quantity greater than allowed");
+
+    uint256 totalPrice = quantity.mul(onSaleToken.price);
+    require(
+      cropsin.balanceOf(_msgSender(), ERC20_TOKEN_ID) >= totalPrice,
+      "Marketplace: the buyer has not enough balance of CRP"
+    );
+
+    uint256 newQty = onSaleToken.quantity.sub(quantity);
+
+    if (newQty > 0) {
+      _onSaleTokens[tokenId][from] = OnSaleToken(newQty, onSaleToken.price);
+    } else {
+      delete _onSaleTokens[tokenId][from];
+    }
+
+    cropsin.safeTransferFrom(from, _msgSender(), tokenId, quantity, "");
+    cropsin.safeTransferFrom(_msgSender(), from, ERC20_TOKEN_ID, totalPrice, "");
+  
+    emit TokenSold(from, _msgSender(), tokenId, quantity, totalPrice);
   }
 }

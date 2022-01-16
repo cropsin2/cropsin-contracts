@@ -250,4 +250,119 @@ describe("Marketplace", () => {
       expect(newAvailability.quantity).to.eq(0)
     });
   });
+
+  describe("buyTokenFrom", () => {
+    let owner, seller, buyer;
+    const quantity = 10
+    const price = 5
+    const tokenId = 2
+  
+    beforeEach(async () => {
+      [owner, seller, buyer, other] = await ethers.getSigners();
+
+      // seller mints an NFT
+      await cropsin.connect(seller).selfMint(quantity, 0x00)
+
+      // contract owner transfers CRP to the buyer and other
+      await cropsin.safeTransferFrom(owner.address, buyer.address, 1, 1000, 0x00)
+
+      // both seller and buyer grants the marketplace operates their tokens
+      await cropsin.connect(seller).setApprovalForAll(marketplace.address, true)
+      await cropsin.connect(buyer).setApprovalForAll(marketplace.address, true)
+
+      // seller puts the token on sale
+      await marketplace.connect(seller).putTokenOnSaleFrom(seller.address, tokenId, quantity, price)
+    });
+
+    describe('Validations', async () => {
+      it("Should not allow if the token is not on sale", async () => {
+        await cropsin.connect(seller).selfMint(quantity, 0x00)
+
+        await expect(
+          marketplace.connect(buyer).buyTokenFrom(seller.address, 3, 4)
+        ).to.be.revertedWith("Marketplace: quantity greater than allowed");
+      });
+
+      it("Should not allow if the quantity is greater than the one put on sale", async () => {
+        await expect(
+          marketplace.connect(buyer).buyTokenFrom(seller.address, tokenId, quantity + 4)
+        ).to.be.revertedWith("Marketplace: quantity greater than allowed");
+      });
+
+      it("Should revert if the token does not exist", async () => {
+        await expect(
+          marketplace.connect(buyer).buyTokenFrom(seller.address, 9999, 4)
+        ).to.be.revertedWith("Marketplace: tokenId does not exists");
+      })
+
+      it("Should revert if the buyer has not granted access to the marketplace as an operator", async () => {
+        await cropsin.safeTransferFrom(owner.address, other.address, 1, 1000, 0x00)
+
+        await expect(
+          marketplace.connect(other).buyTokenFrom(seller.address, 2, 4)
+        ).to.be.revertedWith("Marketplace: the marketplace contract is not added as an operator of the CRP token");
+      })
+
+      it("Should revert if the seller has not granted access to the marketplace as an operator", async () => {
+        await cropsin.connect(seller).setApprovalForAll(marketplace.address, false)
+
+        await expect(
+          marketplace.connect(buyer).buyTokenFrom(seller.address, 2, 4)
+        ).to.be.revertedWith("Marketplace: the marketplace contract is not added as an operator of the token");
+      })
+
+      it("Should revert if the buyer has not enough balance", async () => {
+        await cropsin.connect(other).setApprovalForAll(marketplace.address, true)
+
+        await expect(
+          marketplace.connect(other).buyTokenFrom(seller.address, 2, 4)
+        ).to.be.revertedWith("Marketplace: the buyer has not enough balance of CRP");
+      })
+    })
+
+    describe('Balances', async () => {
+      it("Should substract the tokenId quantity from the seller and add it to the buyer", async () => {
+        await marketplace.connect(buyer).buyTokenFrom(seller.address, tokenId, 6)
+
+        const sellerBalance = await cropsin.balanceOf(seller.address, tokenId)
+        const buyerBalance = await cropsin.balanceOf(buyer.address, tokenId)
+
+        expect(sellerBalance).to.eq(4)
+        expect(buyerBalance).to.eq(6)
+      })
+
+      it("Should delete the item from the on sale list if the buyer buys everything", async () => {
+        await marketplace.connect(buyer).buyTokenFrom(seller.address, tokenId, quantity)
+
+        const availability = await marketplace.availability(tokenId, seller.address)
+
+        expect(availability.price).to.eq(0)
+        expect(availability.quantity).to.eq(0)
+      })
+
+      it("Should substract the sold quantity from the on sale list", async () => {
+        await marketplace.connect(buyer).buyTokenFrom(seller.address, tokenId, 3)
+
+        const availability = await marketplace.availability(tokenId, seller.address)
+
+        expect(availability.price).to.eq(price)
+        expect(availability.quantity).to.eq(7)
+      })
+    })
+
+    describe('Events', async () => {
+      it("Should emit an event", async () => {
+        const tx = await marketplace.connect(buyer).buyTokenFrom(seller.address, tokenId, 6)
+        const receipt = await tx.wait()
+        const event = receipt.events[2]
+
+        expect(event.event).to.equal("TokenSold")
+        expect(event.args["from"]).to.equal(seller.address)
+        expect(event.args["to"]).to.equal(buyer.address)
+        expect(event.args["tokenId"]).to.equal(tokenId)
+        expect(event.args["quantity"]).to.equal(6)
+        expect(event.args["totalPrice"]).to.equal(6 * price)
+      })
+    })
+  });
 });
