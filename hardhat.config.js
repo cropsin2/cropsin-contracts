@@ -15,7 +15,7 @@ module.exports = {
          url: 'http://localhost:8545'
       },
       mumbai: {
-         url: 'https://rpc-mumbai.maticvigil.com',
+         url: MUMBAI_RPC_URL,
          accounts: [`0x${PRIVATE_KEY}`],
          maxPriorityFeePerGas: 1999999987,
          gasPrice: 9000000000,
