@@ -1,12 +1,15 @@
 async function main() {
-  // Grab the contract factory
   const Cropsin = await ethers.getContractFactory("Cropsin");
+  const Marketplace = await ethers.getContractFactory("Marketplace");
 
   const TOKEN_URI = 'https://test.uri/{id}.json'
-  // Start deployment, returning a promise that resolves to a contract object
-  const deployed = await Cropsin.deploy(TOKEN_URI); // Instance of the contract
-  console.log("Contract deployed to address:", deployed.address);
-  console.log("Transaction hash", deployed.deployTransaction.hash);
+
+  const cropsin = await Cropsin.deploy(TOKEN_URI);
+  console.log(`Cropsin contract deployed to address: ${cropsin.address} and the tx hash is ${cropsin.deployTransaction.hash}`);
+
+  const marketplace = await Marketplace.deploy(cropsin.address);
+  console.log(`Marketplace contract deployed to address: ${marketplace.address} and the tx hash is ${marketplace.deployTransaction.hash}`);
+
 }
 
 main()

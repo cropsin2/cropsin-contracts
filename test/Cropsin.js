@@ -8,7 +8,7 @@ const { expect } = chai
 const TOKEN_URI = "https://this.is.a.test/{id}.json"
 const CONTRACT_NAME = "Cropsin"
 
-describe.skip("Crospin tests", () => {
+describe("Crospin tests", () => {
   let Cropsin;
   let cropsin;
 

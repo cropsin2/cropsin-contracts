@@ -18,7 +18,7 @@ describe("Marketplace", () => {
     await marketplace.deployed();
   })
 
-  describe.skip("constructor", () => {
+  describe("constructor", () => {
     it("Should set paused to false", async () => {
       expect(await marketplace.paused()).to.equal(false);
     });
@@ -30,7 +30,7 @@ describe("Marketplace", () => {
     });
   });
 
-  describe.skip("pause", () => {
+  describe("pause", () => {
     it("Should set paused to true", async () => {
       await marketplace.pause()
     
@@ -46,7 +46,7 @@ describe("Marketplace", () => {
     });
   });
 
-  describe.skip("unpause", () => {
+  describe("unpause", () => {
     it("Should set paused to false", async () => {
       await marketplace.pause()
       await marketplace.unpause()
@@ -73,6 +73,7 @@ describe("Marketplace", () => {
       [owner, approved, other] = await ethers.getSigners();
 
       await cropsin.selfMint(quantity, 0x00)
+      await cropsin.setApprovalForAll(marketplace.address, true)
     })
 
     describe("Ownership and approvals", async () => {
@@ -91,6 +92,14 @@ describe("Marketplace", () => {
       it("Should allow the owner of the token", async () => {
         await marketplace.connect(owner).putTokenOnSaleFrom(owner.address, tokenId, quantity, price)
       });
+
+      it("Should have add the current contract as a valid operator the owner of the token", async () => {
+        const anotherMarketplace = await Marketplace.deploy(cropsin.address);
+        await anotherMarketplace.deployed();
+        await expect(
+          anotherMarketplace.connect(owner).putTokenOnSaleFrom(owner.address, tokenId, quantity, price)
+        ).to.be.revertedWith("Marketplace: the marketplace contract is not added as an operator of the token");
+      });
     });
 
     describe("Same token different accounts selling", async () => {
@@ -107,6 +116,8 @@ describe("Marketplace", () => {
         expect(approvedBalace).to.eq(5)
 
         await marketplace.putTokenOnSaleFrom(owner.address, tokenId, 4, 6)
+        
+        await cropsin.connect(approved).setApprovalForAll(marketplace.address, true)
         await marketplace.connect(approved).putTokenOnSaleFrom(approved.address, tokenId, 3, 3)
 
         const availabilityFromOwner = await marketplace.availability(tokenId, owner.address)
@@ -147,24 +158,96 @@ describe("Marketplace", () => {
         ).to.be.revertedWith("Marketplace: quantity greater than allowed")
       });
     });
+  });
 
-    describe("availability", async () => {
-      it("Should return the current availability for an existing tokenId and a given token holder", async () => {
-        await marketplace.putTokenOnSaleFrom(owner.address, tokenId, quantity, price)
+  describe("removeFromSaleFrom", () => {
+    let owner, approved, other;
+    const quantity = 10
+    const price = 5
+    const tokenId = 2
+  
+    beforeEach(async () => {
+      [owner, approved, other] = await ethers.getSigners();
 
-        const availability = await marketplace.availability(tokenId, owner.address)
+      await cropsin.selfMint(quantity, 0x00)
+      await cropsin.setApprovalForAll(marketplace.address, true)
+      await marketplace.putTokenOnSaleFrom(owner.address, tokenId, quantity, price)
+    })
 
-        expect(availability.price).to.eq(price)
-        expect(availability.quantity).to.eq(quantity)
+    describe("Ownership and approvals", async () => {
+      it("Should not allow other address", async () => {
+        await expect(
+          marketplace.connect(other).removeTokenFromSaleFrom(owner.address, tokenId)
+        ).to.be.revertedWith("Marketplace: caller is not ERC1155 owner nor approved");
       });
 
-      it("Should return the current availability for a non existing tokenId", async () => {
-        const nonExistingTokenId = 999
-        const availability = await marketplace.availability(nonExistingTokenId, owner.address)
+      it("Should allow an approved operator", async () => {
+        await cropsin.setApprovalForAll(approved.address, true)
 
-        expect(availability.price).to.eq(0)
-        expect(availability.quantity).to.eq(0)
+        await marketplace.connect(approved).removeTokenFromSaleFrom(owner.address, tokenId)
       });
+
+      it("Should allow the owner of the token", async () => {
+        await marketplace.connect(owner).removeTokenFromSaleFrom(owner.address, tokenId)
+      });
+    });
+
+    describe("Event", async () => {
+      it("Should emit an event", async () => {
+        const tx = await marketplace.removeTokenFromSaleFrom(owner.address, tokenId)
+        const receipt = await tx.wait()
+        const event = receipt.events[0]
+
+        expect(event.event).to.equal("TokenRemovedFromSale")
+        expect(event.args["from"]).to.equal(owner.address)
+        expect(event.args["tokenId"]).to.equal(tokenId)
+      })
+    })
+  });
+
+  describe("availability", async () => {
+    let owner;
+    const quantity = 10;
+    const price = 5;
+    const tokenId = 2;
+  
+    beforeEach(async () => {
+      [owner] = await ethers.getSigners();
+
+      await cropsin.selfMint(quantity, 0x00)
+      await cropsin.setApprovalForAll(marketplace.address, true)
+    })
+
+    it("Should return the current availability for an existing tokenId and a given token holder", async () => {
+      await marketplace.putTokenOnSaleFrom(owner.address, tokenId, quantity, price)
+
+      const availability = await marketplace.availability(tokenId, owner.address)
+
+      expect(availability.price).to.eq(price)
+      expect(availability.quantity).to.eq(quantity)
+    });
+
+    it("Should return the current availability for a non existing tokenId", async () => {
+      const nonExistingTokenId = 999
+      const availability = await marketplace.availability(nonExistingTokenId, owner.address)
+
+      expect(availability.price).to.eq(0)
+      expect(availability.quantity).to.eq(0)
+    });
+
+    it("Should return the current availability for removed token", async () => {
+      await marketplace.putTokenOnSaleFrom(owner.address, tokenId, quantity, price)
+
+      const availability = await marketplace.availability(tokenId, owner.address)
+
+      expect(availability.price).to.eq(price)
+      expect(availability.quantity).to.eq(quantity)
+
+      await marketplace.removeTokenFromSaleFrom(owner.address, tokenId)
+      const newAvailability = await marketplace.availability(tokenId, owner.address)
+
+      expect(newAvailability.price).to.eq(0)
+      expect(newAvailability.quantity).to.eq(0)
     });
   });
 });
