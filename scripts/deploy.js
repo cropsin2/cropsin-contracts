@@ -11,7 +11,6 @@ async function main() {
   const marketplace = await Marketplace.deploy(cropsin.address);
   console.log(`Marketplace contract deployed to address: ${marketplace.address}`);
   console.log(`The tx hash is ${marketplace.deployTransaction.hash}`);
-
 }
 
 main()

@@ -6,7 +6,7 @@
 
 _Ropsten address: [0x0cA63188F36714bEc074c493B33F5BAE6232A50d](https://ropsten.etherscan.io/address/0x0cA63188F36714bEc074c493B33F5BAE6232A50d)_
 
-_Mumbai address: []()_
+_Mumbai address: [0xa5D637B2d564fD79a30A626B44Ce891b88C04D55](https://mumbai.polygonscan.com/address/0xa5D637B2d564fD79a30A626B44Ce891b88C04D55)_
 
 It's an Ownable ERC1155Supply contract.
 
@@ -38,7 +38,7 @@ There are also some *Extra methods* or small changes to the Open Zeppelin implem
 
 _Ropsten address: [0xD00f38B0F02957695AFb8b701E54fac4C14d4138](https://ropsten.etherscan.io/address/0xD00f38B0F02957695AFb8b701E54fac4C14d4138)_
 
-_Mumbai address: []()_
+_Mumbai address: [0x56bDCe430F890E940a8735d8Facb2F245f431D8c](https://mumbai.polygonscan.com/address/0x56bDCe430F890E940a8735d8Facb2F245f431D8c)_
 
 It's an Ownable and Pausable contract that acts as a Marketplace of _Cropsin_ tokens.
 
